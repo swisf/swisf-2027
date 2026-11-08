@@ -78,10 +78,7 @@ export const navLinks = [
   { label: 'Project Sunray', to: '/project-sunray' },
   { label: 'Mascots', to: '/mascots' },
   { label: 'Sponsors', to: '/sponsors' },
-  /*
-  TODO: Fix Team section
   { label: 'Team', to: '/team' },
-   */
 ] as const;
 
 export const partnerCta = { label: 'Partner With Us', to: '/sponsors#partner-with-us' } as const;
@@ -114,8 +111,8 @@ export const seo = {
       'co-organised by BSE. Partner with SUNRAY – World Innovation Summit & Festival 2027 as an associate, startup arena, festival, knowledge, hospitality or media partner.',
   },
   team: {
-    title: 'Team | SWISF 2027 — E-Cell, NIT Meghalaya',
-    description: 'Meet the people behind SWISF 2027, organised by E-Cell, NIT Meghalaya.',
+    title: 'Organising Team | SWISF 2027 — E-Cell, NIT Meghalaya',
+    description: 'Meet the organising team of SWISF 2027: the students of E-Cell, NIT Meghalaya, department by department.',
   },
   notFound: {
     title: 'Page not found | SWISF 2027',

@@ -13,7 +13,7 @@ two-tone headings, gold cloud and circuit ornaments, outlined icon circles and t
 | `/project-sunray` | One screen: The Next Generation, the Project Sunray journey and schools sign-up |
 | `/mascots` | Meet the mascots: a split dawn/night opening screen, then one screen each for Sun and Ray, and "Together they are SUNRAY" |
 | `/sponsors` | co-organised by BSE, partner categories marked “Coming soon” (`#partner-with-us`), collaborate banner, partner logo wall |
-| `/team` | Leadership and departments, filterable by department |
+| `/team` | The organising team, department by department, with an index of departments that follows you down the page (`/team#design` opens at Design). Read from `src/data/organising-team.json` |
 | anything else | 404: "The sun hasn't risen here" |
 
 ---
@@ -78,7 +78,8 @@ All text, lists and icons live in typed data files. You don't need to touch any 
 | `src/data/sunray.ts` | Project Sunray copy, the four journey steps, schools call-to-action |
 | `src/data/mascots.ts` | Sun and Ray: names, taglines, descriptions, what they stand for, the labels on their artwork; "Together they are SUNRAY" |
 | `src/data/partners.ts` | BSE card, partner categories (“Coming soon”), **partner logo list** |
-| `src/data/team.ts` | Departments and **team members** |
+| `src/data/organising-team.json` | The **organising team**: department → person → designation and picture (see below) |
+| `src/data/team.ts` | Team page text; reads the JSON file above |
 
 Icons are [Lucide](https://lucide.dev/icons/) components. To change one, import another name from `lucide-react` at the top of the data file.
 Accent colours are `'royal' | 'saffron' | 'teal' | 'violet' | 'crimson' | 'gold'`.
@@ -105,23 +106,33 @@ When a registration page exists, point the button in `src/components/sections/He
 
 `site.socials` in `src/data/site.ts`. LinkedIn and YouTube are **placeholder search links**. Paste the official page URLs.
 
-### Adding team members
+### The organising team
 
-Edit `src/data/team.ts`. Every current entry is a placeholder ("Member Name" / "Head Name").
+`/team` reads `src/data/organising-team.json`: department → person → designation and picture.
 
-```ts
-import priyaPhoto from '../assets/images/team/priya.webp'; // optional square photo
-
-{ id: 'technical-head', name: 'Priya Sharma', role: 'Head', title: 'Technical Head',
-  department: 'Technical', photo: priyaPhoto,
-  socials: { linkedin: 'https://linkedin.com/in/…', instagram: 'https://instagram.com/…', email: 'priya@…' } },
+```json
+{
+  "Design": {
+    "Alfred": { "designation": "Head", "picture": "organising-team/alfred.webp" },
+    "Bhanu": { "designation": "Member", "picture": "organising-team/bhanu.webp" }
+  },
+  "Vigilance": {}
+}
 ```
 
-- `role`: `'President' | 'Vice President' | 'Secretary' | 'Head' | 'Member'`. Leadership roles appear at the top; Heads and Members appear under their department.
-- Without a `photo`, the card shows the person's initials on a tinted circle.
-- Social icons only appear for the links you provide (on desktop they slide up on hover).
-- Use `order` (lower first) to control ordering inside a group.
-- Photos: square, about 400×400px, WebP, in `src/assets/images/team/`.
+- Departments and people appear in the order they are written. A department with nobody in it stays hidden until you add someone.
+- Someone in two departments (an anchor who is also a secretary, say) is listed in both and counted once in the "People" total.
+- `picture` is the file's path inside `src/assets/images/`; team pictures live in `src/assets/images/organising-team/`.
+  A path from the project root (`src/assets/images/organising-team/alfred.webp`) works too.
+- Photos are shown in a 4:5 arched frame, cropped from the centre with the face kept near the top. Export them at about
+  **400×500, WebP, quality 75** (15–40 KB each), e.g. with [Squoosh](https://squoosh.app). Square photos work too; the sides are trimmed.
+- Everyone without a photo has a **placeholder crest**: their initials in a kamon-style crest over the Meghalaya hills.
+  The colours and pattern come from their name, so each crest is unique and never changes.
+  To swap in a photo, save it over the crest file with the same name.
+- Add someone without a picture (or with a picture that isn't there yet) and the page draws their crest itself. No file is needed.
+- Heads are labelled in saffron and secretaries in royal blue; other designations are gold.
+- While `npm run dev` is running, the browser console warns about pictures it can't find and photos wider than 1000px.
+- Edits show up after the next build: a push to `main` for GitHub Pages, or `npm run build` and a fresh upload for Hostinger.
 
 ### Adding partner logos
 
@@ -183,11 +194,12 @@ src/
                                        SocialLinks, icons
     ornaments/                         GoldCloud, CircuitTraces, DottedGlobe, SkylineStrip, Lantern, LatticeBorder,
                                        MandalaWatermark, ArcFrame, StarField, Decor, Motif, Particles (GoldDust, FallingPetals,
-                                       SkyLanterns), PrayerFlags, Seigaiha, Fireworks, AtomOrbit, Enso, MascotArt, Ridge, RisingSun
+                                       SkyLanterns), PrayerFlags, Seigaiha, Fireworks, AtomOrbit, Enso, MascotArt, Ridge, RisingSun,
+                                       PortraitCrest
     sections/                          Hero, Welcome, AboutSwisf, WhyNortheast, StatesRing, HomeCta,
                                        DayNightToggle, SummitByDay, FestivalByNight, NextGeneration, MascotsHero, MeetSun,
-                                       MeetRay, MascotCopy, MascotsTogether, Partners, TeamGrid, StatCounter
-  data/                                site, home, summit, festival, sunray, mascots, partners, team
+                                       MeetRay, MascotCopy, MascotsTogether, Partners, TeamHero, TeamGrid, StatCounter
+  data/                                site, home, summit, festival, sunray, mascots, partners, team (+ organising-team.json)
   hooks/                               useCountdown, useScrolled, usePageMeta, useScrollReveal, usePauseOffscreen, usePointerLean
   lib/                                 accents (colour → class maps), cn, cssVars, random (seeded ornaments)
   assets/images, assets/logos          WebP artwork

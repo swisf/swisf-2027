@@ -42,7 +42,8 @@ export default function Navbar({ menuOpen, onOpenMenu, menuButtonRef }: NavbarPr
         <LogoLockup homeLink compactBse tone={overlay ? 'dark' : 'light'} />
 
         <nav aria-label="Primary" className="hidden lg:block">
-          <ul className="flex items-center gap-5 xl:gap-8">
+          {/* spacing tightens below 1440px so all six links and the button fit beside the logo */}
+          <ul className="flex items-center gap-2.5 min-[1120px]:gap-4 xl:gap-[18px] min-[1440px]:gap-6 2xl:gap-8">
             {navLinks.map((link) => (
               <li key={link.to}>
                 <NavLink
@@ -50,7 +51,7 @@ export default function Navbar({ menuOpen, onOpenMenu, menuButtonRef }: NavbarPr
                   end={link.to === '/'}
                   className={({ isActive }) =>
                     cn(
-                      'group relative inline-flex min-h-[44px] items-center whitespace-nowrap text-[12px] font-medium uppercase tracking-[0.1em] transition-colors xl:text-[13px] xl:tracking-[0.15em]',
+                      'group relative inline-flex min-h-[44px] items-center whitespace-nowrap text-[12px] font-medium uppercase tracking-[0.08em] transition-colors xl:text-[13px] xl:tracking-[0.13em] min-[1440px]:tracking-[0.15em]',
                       isActive ? (overlay ? 'text-saffron-bright' : 'text-saffron-ink') : overlay ? 'text-cream/90 hover:text-cream' : 'text-navy',
                     )
                   }
@@ -78,7 +79,7 @@ export default function Navbar({ menuOpen, onOpenMenu, menuButtonRef }: NavbarPr
         </nav>
 
         <div className="hidden lg:block">
-          <Button to={partnerCta.to} size="sm" variant={overlay ? 'sun' : 'primary'} className="whitespace-nowrap">
+          <Button to={partnerCta.to} size="sm" variant={overlay ? 'sun' : 'primary'} className="whitespace-nowrap max-xl:px-4">
             {partnerCta.label}
           </Button>
         </div>

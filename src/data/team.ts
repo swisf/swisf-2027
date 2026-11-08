@@ -1,131 +1,102 @@
 /**
- * Team page data.
+ * Organising team page data.
  *
- * Every entry below is a PLACEHOLDER — replace "Member Name" with real names.
- * To add a photo, put a square image in src/assets/images/team/, import it at
- * the top of this file and set `photo`. Without a photo the card shows the
- * person's initials on a tinted circle.
+ * The people live in `organising-team.json`, grouped by department:
  *
- *   import priyaPhoto from '../assets/images/team/priya.webp';
- *   { id: 'tech-head-1', name: 'Priya Sharma', role: 'Head', title: 'Technical Head',
- *     department: 'Technical', photo: priyaPhoto,
- *     socials: { linkedin: 'https://linkedin.com/in/…', instagram: 'https://instagram.com/…', email: 'priya@…' } },
+ *   "Design": {
+ *     "Alfred": { "designation": "Head", "picture": "organising-team/alfred.webp" }
+ *   }
+ *
+ * Departments and people appear on the page in the order they are written; an empty department is skipped.
+ * `picture` is where the image is inside src/assets/images/ (the full path from the project root, e.g.
+ * src/assets/images/organising-team/alfred.webp, works too). Portraits are 4:5, ideally 480×600 WebP.
+ * Without a picture, or if the file isn't there, the card draws the person's crest instead.
  */
-import type { Accent } from '../lib/accents';
+import rawTeam from './organising-team.json';
 
-export type Role = 'President' | 'Vice President' | 'Secretary' | 'Head' | 'Member';
-
-export type Department =
-  | 'Technical'
-  | 'Marketing & Sponsorship'
-  | 'Public Relations & Outreach'
-  | 'Events & Operations'
-  | 'Design & Creatives'
-  | 'Content & Social Media'
-  | 'Finance'
-  | 'Hospitality & Logistics'
-  | 'Project Sunray (Project Sunray)';
+type RawPerson = { designation?: string; picture?: string };
 
 export interface TeamMember {
+  /** Unique on the page, e.g. "design-alfred" */
   id: string;
   name: string;
-  role: Role;
-  /** Shown on the card, e.g. "Technical Head" */
-  title?: string;
-  department?: Department;
-  photo?: string;
-  socials?: { linkedin?: string; instagram?: string; email?: string };
-  /** Lower numbers appear first within the same group */
-  order?: number;
+  designation?: string;
+  /** Image URL; undefined draws the person's crest */
+  picture?: string;
 }
 
-/** Department order and accent colour on the Team page. */
-export const departments: { name: Department; slug: string; accent: Accent }[] = [
-  { name: 'Technical', slug: 'technical', accent: 'royal' },
-  { name: 'Marketing & Sponsorship', slug: 'marketing', accent: 'saffron' },
-  { name: 'Public Relations & Outreach', slug: 'pr-outreach', accent: 'teal' },
-  { name: 'Events & Operations', slug: 'events', accent: 'violet' },
-  { name: 'Design & Creatives', slug: 'design', accent: 'royal' },
-  { name: 'Content & Social Media', slug: 'content', accent: 'saffron' },
-  { name: 'Finance', slug: 'finance', accent: 'teal' },
-  { name: 'Hospitality & Logistics', slug: 'hospitality', accent: 'violet' },
-  { name: 'Project Sunray (Project Sunray)', slug: 'project-centre', accent: 'crimson' },
-];
+export interface TeamDepartment {
+  /** Section id, so /team#design opens at that department */
+  id: string;
+  name: string;
+  members: TeamMember[];
+}
+
+const IMAGES_DIR = '../assets/images/';
+
+/** Every portrait in src/assets/images/organising-team/, keyed by its lower-case path inside src/assets/images/. */
+const PICTURES: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>('../assets/images/organising-team/**/*.{webp,avif,png,jpg,jpeg,WEBP,AVIF,PNG,JPG,JPEG}', {
+      eager: true,
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.slice(IMAGES_DIR.length).toLowerCase(), url]),
+);
+
+/** Accepts "organising-team/x.webp", "src/assets/images/organising-team/x.webp", "./…" and Windows backslashes. */
+function pictureUrl(path: string | undefined): string | undefined {
+  const clean = path?.trim().replace(/\\/g, '/').replace(/^\.?\//, '').replace(/^src\/assets\/images\//i, '');
+  return clean ? PICTURES[clean.toLowerCase()] : undefined;
+}
+
+const slugify = (text: string) =>
+  text
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'team';
+
+// ids already used on every page
+const usedIds = new Set(['main', 'root', 'mobile-menu']);
+function uniqueId(base: string) {
+  let id = base;
+  for (let n = 2; usedIds.has(id); n++) id = `${base}-${n}`;
+  usedIds.add(id);
+  return id;
+}
+
+/** Departments with at least one person, in the order of the JSON file. */
+export const departments: TeamDepartment[] = Object.entries(rawTeam as Record<string, Record<string, RawPerson>>)
+  .map(([department, people]) => {
+    const id = uniqueId(slugify(department));
+    const members = Object.entries(people ?? {}).map(([person, info]) => {
+      const picture = pictureUrl(info?.picture);
+      if (import.meta.env.DEV && info?.picture && !picture) {
+        console.warn(`[team] ${person} (${department}): no picture at src/assets/images/${info.picture}, drawing a crest instead.`);
+      }
+      return { id: `${id}-${slugify(person)}`, name: person.trim(), designation: info?.designation?.trim() || undefined, picture };
+    });
+    return { id, name: department.trim(), members };
+  })
+  .filter((department) => department.members.length > 0);
+
+/** Someone in two departments counts once. */
+export const teamCounts = {
+  people: new Set(departments.flatMap((d) => d.members.map((m) => m.name.toLowerCase()))).size,
+  departments: departments.length,
+};
 
 export const teamPage = {
-  heading: { line1: 'The people', line2: 'behind SWISF' },
-  subline: 'Organised by E-Cell, NIT Meghalaya',
-  filterLabel: 'Filter by department',
-  allLabel: 'All',
-  leadershipLabel: 'Leadership',
-  headsLabel: 'Heads',
-  membersLabel: 'Members',
+  eyebrow: 'SWISF 2027 · E-Cell, NIT Meghalaya',
+  heading: { line1: 'The organising', line2: 'team' },
+  intro: 'The students of E-Cell, NIT Meghalaya who are putting SWISF 2027 together, team by team.',
+  stats: { people: 'People', departments: 'Teams' },
+  navLabel: 'Teams',
   join: {
     title: 'Want to join E-Cell?',
     text: 'Follow E-Cell NIT Meghalaya on Instagram for recruitment calls, events and Project Sunray updates.',
     linkLabel: 'Follow on Instagram',
   },
 };
-
-/** PLACEHOLDER entries — replace with the real team. */
-export const team: TeamMember[] = [
-  // Leadership
-  { id: 'president', name: 'Member Name', role: 'President', title: 'President', order: 1, socials: { email: 'swisf2027@gmail.com' } },
-  { id: 'vice-president-1', name: 'Member Name', role: 'Vice President', title: 'Vice President', order: 1 },
-  { id: 'vice-president-2', name: 'Member Name', role: 'Vice President', title: 'Vice President', order: 2 },
-  { id: 'general-secretary', name: 'Member Name', role: 'Secretary', title: 'General Secretary', order: 3 },
-
-  // Technical
-  { id: 'technical-head', name: 'Head Name', role: 'Head', title: 'Technical Head', department: 'Technical' },
-  { id: 'technical-member-1', name: 'Member Name', role: 'Member', department: 'Technical' },
-  { id: 'technical-member-2', name: 'Member Name', role: 'Member', department: 'Technical' },
-  { id: 'technical-member-3', name: 'Member Name', role: 'Member', department: 'Technical' },
-
-  // Marketing & Sponsorship
-  { id: 'marketing-head', name: 'Head Name', role: 'Head', title: 'Marketing & Sponsorship Head', department: 'Marketing & Sponsorship' },
-  { id: 'marketing-member-1', name: 'Member Name', role: 'Member', department: 'Marketing & Sponsorship' },
-  { id: 'marketing-member-2', name: 'Member Name', role: 'Member', department: 'Marketing & Sponsorship' },
-  { id: 'marketing-member-3', name: 'Member Name', role: 'Member', department: 'Marketing & Sponsorship' },
-
-  // Public Relations & Outreach
-  { id: 'pr-head', name: 'Head Name', role: 'Head', title: 'PR & Outreach Head', department: 'Public Relations & Outreach' },
-  { id: 'pr-member-1', name: 'Member Name', role: 'Member', department: 'Public Relations & Outreach' },
-  { id: 'pr-member-2', name: 'Member Name', role: 'Member', department: 'Public Relations & Outreach' },
-  { id: 'pr-member-3', name: 'Member Name', role: 'Member', department: 'Public Relations & Outreach' },
-
-  // Events & Operations
-  { id: 'events-head', name: 'Head Name', role: 'Head', title: 'Events & Operations Head', department: 'Events & Operations' },
-  { id: 'events-member-1', name: 'Member Name', role: 'Member', department: 'Events & Operations' },
-  { id: 'events-member-2', name: 'Member Name', role: 'Member', department: 'Events & Operations' },
-  { id: 'events-member-3', name: 'Member Name', role: 'Member', department: 'Events & Operations' },
-
-  // Design & Creatives
-  { id: 'design-head', name: 'Head Name', role: 'Head', title: 'Design & Creatives Head', department: 'Design & Creatives' },
-  { id: 'design-member-1', name: 'Member Name', role: 'Member', department: 'Design & Creatives' },
-  { id: 'design-member-2', name: 'Member Name', role: 'Member', department: 'Design & Creatives' },
-  { id: 'design-member-3', name: 'Member Name', role: 'Member', department: 'Design & Creatives' },
-
-  // Content & Social Media
-  { id: 'content-head', name: 'Head Name', role: 'Head', title: 'Content & Social Media Head', department: 'Content & Social Media' },
-  { id: 'content-member-1', name: 'Member Name', role: 'Member', department: 'Content & Social Media' },
-  { id: 'content-member-2', name: 'Member Name', role: 'Member', department: 'Content & Social Media' },
-  { id: 'content-member-3', name: 'Member Name', role: 'Member', department: 'Content & Social Media' },
-
-  // Finance
-  { id: 'finance-head', name: 'Head Name', role: 'Head', title: 'Finance Head', department: 'Finance' },
-  { id: 'finance-member-1', name: 'Member Name', role: 'Member', department: 'Finance' },
-  { id: 'finance-member-2', name: 'Member Name', role: 'Member', department: 'Finance' },
-  { id: 'finance-member-3', name: 'Member Name', role: 'Member', department: 'Finance' },
-
-  // Hospitality & Logistics
-  { id: 'hospitality-head', name: 'Head Name', role: 'Head', title: 'Hospitality & Logistics Head', department: 'Hospitality & Logistics' },
-  { id: 'hospitality-member-1', name: 'Member Name', role: 'Member', department: 'Hospitality & Logistics' },
-  { id: 'hospitality-member-2', name: 'Member Name', role: 'Member', department: 'Hospitality & Logistics' },
-  { id: 'hospitality-member-3', name: 'Member Name', role: 'Member', department: 'Hospitality & Logistics' },
-
-  // Project Sunray (Project Sunray)
-  { id: 'project-centre-head', name: 'Head Name', role: 'Head', title: 'Project Sunray Head', department: 'Project Sunray (Project Sunray)' },
-  { id: 'project-centre-member-1', name: 'Member Name', role: 'Member', department: 'Project Sunray (Project Sunray)' },
-  { id: 'project-centre-member-2', name: 'Member Name', role: 'Member', department: 'Project Sunray (Project Sunray)' },
-  { id: 'project-centre-member-3', name: 'Member Name', role: 'Member', department: 'Project Sunray (Project Sunray)' },
-];

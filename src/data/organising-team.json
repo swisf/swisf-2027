@@ -1,0 +1,66 @@
+{
+  "Executive Leadership": {
+    "Arush Raman" : { "designation": "President", "picture": "organising-team/arush-raman.webp"}
+  },
+  "Anchors": {
+    "Swarnim Suman": { "designation": "Anchor", "picture": "organising-team/swarnim-suman.webp" },
+    "Shivika Singh": { "designation": "Anchor", "picture": "organising-team/shivika-singh.webp" },
+    "Ruhul Amin": { "designation": "Anchor", "picture": "organising-team/ruhul-amin.webp" }
+  },
+  "Social Media": {
+    "Natasha Barman": { "designation": "Head", "picture": "organising-team/natasha-barman.webp" },
+    "Roshani Kiran": { "designation": "Secretary", "picture": "organising-team/roshani-kiran.webp" }
+  },
+  "Technical": {
+    "Akshith Reddy": { "designation": "Head", "picture": "organising-team/akshith-reddy.webp" },
+    "Manish Chauhan": { "designation": "Secretary", "picture": "organising-team/manish-chauhan.webp" }
+  },
+  "Incubation": {
+    "Saloni Singh": { "designation": "Head", "picture": "organising-team/saloni-singh.webp" },
+    "Shivika Singh": { "designation": "Secretary", "picture": "organising-team/shivika-singh.webp" },
+    "Arush Saxena": { "designation": "Secretary", "picture": "organising-team/arush-saxena.webp" }
+  },
+  "HR and Student Welfare": {
+    "Polomi Das": { "designation": "Head", "picture": "organising-team/polomi-das.webp" },
+    "Dibya Sundar Banerjee": { "designation": "Secretary", "picture": "organising-team/dibya-sundar-banerjee.webp" },
+    "Tankala Lakitha": { "designation": "Member", "picture": "organising-team/tankala-lakitha.webp" }
+  },
+  "Event Management and Logistics": {
+    "Nazia Hasan Sheikh": { "designation": "Head", "picture": "organising-team/nazia-hasan-sheikh.webp" },
+    "Vishnu Kant Rai": { "designation": "Secretary", "picture": "organising-team/vishnu-kant-rai.webp" },
+    "Krishno Das": { "designation": "Member", "picture": "organising-team/krishno-das.webp" },
+    "Vishal Kumar": { "designation": "Member", "picture": "organising-team/vishal-kumar.webp" },
+    "Sachin Pandey": { "designation": "Member", "picture": "organising-team/sachin-pandey.webp" }
+  },
+  "Technical Communication": {
+    "Bajanai": { "designation": "Head", "picture": "organising-team/bajanai.webp" },
+    "Archi": { "designation": "Secretary", "picture": "organising-team/archi.webp" }
+  },
+  "Research and Development": {
+    "Anjali": { "designation": "Head", "picture": "organising-team/anjali.webp" }
+  },
+  "Design": {
+    "Alfred": { "designation": "Head", "picture": "organising-team/alfred.webp" },
+    "Satyam": { "designation": "Head", "picture": "organising-team/satyam.webp" },
+    "Bhanu": { "designation": "Member", "picture": "organising-team/bhanu.webp" },
+    "Aryan": { "designation": "Member", "picture": "organising-team/aryan.webp" },
+    "Komal": { "designation": "Member", "picture": "organising-team/komal.webp" },
+    "Damandap Jyrwa": { "designation": "Member", "picture": "organising-team/damandap-jyrwa.webp" },
+    "Riad Ryan": { "designation": "Member", "picture": "organising-team/riad-ryan.webp" },
+    "Edaki Shylla": { "designation": "Member", "picture": "organising-team/edaki-shylla.webp" }
+  },
+  "Software Development and IT": {
+    "Abhay Mishra": { "designation": "Head", "picture": "organising-team/abhay-mishra.webp" },
+    "Ruhul Amin": { "designation": "Secretary", "picture": "organising-team/ruhul-amin.webp" }
+  },
+  "Vigilance": {},
+  "Visual Media": {
+    "Ledonki Bevan Laloo": { "designation": "Head", "picture": "organising-team/ledonki-bevan-laloo.webp" },
+    "Abhinav Gupta": { "designation": "Member", "picture": "organising-team/abhinav-gupta.webp" },
+    "Harish": { "designation": "Member", "picture": "organising-team/harish.webp" }
+  },
+  "Finance": {
+    "Alympa Deka": { "designation": "Head", "picture": "organising-team/alympa-deka.webp" },
+    "Erico Marak": { "designation": "Member", "picture": "organising-team/erico-marak.webp" }
+  }
+}

@@ -366,20 +366,39 @@
   will-change: transform, opacity;
 }
 
-/* Tibetan prayer flags in the wind */
+/* Tibetan prayer flags in the wind. Ten flutters per loop: React listens for animationiteration, which makes
+   Chrome wake the main thread at every loop of every animation, so short loops on many flags kept it busy. */
 @keyframes flutter {
   0%,
+  10%,
+  20%,
+  30%,
+  40%,
+  50%,
+  60%,
+  70%,
+  80%,
+  90%,
   100% {
     transform: rotate(-4deg) skewX(-3deg);
   }
-  50% {
+  5%,
+  15%,
+  25%,
+  35%,
+  45%,
+  55%,
+  65%,
+  75%,
+  85%,
+  95% {
     transform: rotate(5deg) skewX(4deg);
   }
 }
 
 .flag {
   transform-origin: 50% 0%;
-  animation: flutter var(--dur, 3s) ease-in-out var(--delay, 0s) infinite;
+  animation: flutter calc(var(--dur, 3s) * 10) ease-in-out var(--delay, 0s) infinite;
 }
 
 /* Sky lanterns floating up through the night */
@@ -647,6 +666,35 @@
   animation: run-along 3.4s ease-in-out var(--delay, 0s) infinite;
 }
 
+/* Team cards rise in one after another when their grid scrolls into view (TeamGrid), and sink back on the way up */
+.team-card {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition:
+    opacity 0.3s ease-in,
+    transform 0.4s cubic-bezier(0.8, 0, 0.8, 0.3);
+}
+
+[data-shown='true'] > .team-card {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.6s ease-out calc(var(--i, 0) * 70ms),
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i, 0) * 70ms);
+}
+
+/* Portraits fade in once loaded instead of popping in */
+.team-photo {
+  opacity: 0;
+  transition:
+    opacity 0.5s ease,
+    transform 0.7s ease-out;
+}
+
+.team-photo[data-loaded='true'] {
+  opacity: 1;
+}
+
 /* Looping animations stop while their section is off screen (usePauseOffscreen) */
 [data-paused='true'],
 [data-paused='true'] * {
@@ -671,6 +719,12 @@
     animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .team-card,
+  .team-photo {
+    opacity: 1 !important;
+    transform: none !important;
   }
 
   .circuit-glow,

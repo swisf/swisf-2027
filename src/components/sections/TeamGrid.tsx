@@ -1,230 +1,239 @@
-import { useMemo, useState } from 'react';
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
-import { Mail } from 'lucide-react';
-import { departments, team, teamPage, type TeamMember } from '../../data/team';
-import { accentBg, accentRing, accentSoftBg, accentText, type Accent } from '../../lib/accents';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { useReducedMotion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { departments, teamPage, type TeamDepartment, type TeamMember } from '../../data/team';
+import { useScrollReveal } from '../../hooks/useScrollReveal';
+import { accentLine, accentText, rotateAccent } from '../../lib/accents';
 import { cn } from '../../lib/cn';
-import { Diamond } from '../ui/DividerLabel';
-import { InstagramIcon, LinkedinIcon } from '../ui/icons';
+import { cssVars } from '../../lib/cssVars';
+import Motif, { type MotifName } from '../ornaments/Motif';
+import PortraitCrest from '../ornaments/PortraitCrest';
 
-type CardSize = 'xl' | 'lg' | 'md' | 'sm';
+const MOTIFS: MotifName[] = ['sun', 'lotus', 'cloud', 'knot', 'lantern', 'blossom', 'mountains'];
+const DEPARTMENT_IDS = departments.map((d) => d.id);
+const pad = (n: number) => String(n).padStart(2, '0');
 
-const byOrder = (a: TeamMember, b: TeamMember) => (a.order ?? 99) - (b.order ?? 99);
+/** Arched window: a half circle on top (the box is 4:5), small rounded corners below. */
+const ARCH = 'rounded-[50%_50%_14px_14px/40%_40%_14px_14px]';
+const ARCH_INNER = 'rounded-[50%_50%_8px_8px/40%_40%_8px_8px]';
 
-function initialsOf(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+/** Heads in saffron, secretaries in royal blue, everyone else in gold. */
+function designationTone(designation: string) {
+  if (/\b(head|lead|convenor|coordinator|president|captain)\b/i.test(designation)) return 'text-saffron-ink';
+  if (/\b(secretary|deputy|vice)\b/i.test(designation)) return 'text-royal';
+  return 'text-gold-ink';
 }
 
-const photoSize: Record<CardSize, string> = {
-  xl: 'h-36 w-36 text-4xl',
-  lg: 'h-28 w-28 text-3xl',
-  md: 'h-24 w-24 text-2xl',
-  sm: 'h-16 w-16 text-lg sm:h-20 sm:w-20 sm:text-xl',
+function onPortraitLoad(event: SyntheticEvent<HTMLImageElement>) {
+  const img = event.currentTarget;
+  img.dataset.loaded = 'true';
+  if (import.meta.env.DEV && img.naturalWidth > 1000) {
+    console.warn(`[team] ${img.src} is ${img.naturalWidth}px wide; 480×600 is plenty and keeps the page light.`);
+  }
+}
+
+/** The department crossing a band 35–40% down the screen, i.e. the one being read. */
+function useActiveDepartment() {
+  const [active, setActive] = useState(DEPARTMENT_IDS[0]);
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        });
+        // back above the first department (e.g. after jumping to the top): highlight the first again
+        const first = document.getElementById(DEPARTMENT_IDS[0]);
+        if (first && first.getBoundingClientRect().top > window.innerHeight * 0.4) setActive(DEPARTMENT_IDS[0]);
+      },
+      { rootMargin: '-35% 0px -60% 0px' },
+    );
+    DEPARTMENT_IDS.forEach((id) => {
+      const section = document.getElementById(id);
+      if (section) observer.observe(section);
+    });
+    return () => observer.disconnect();
+  }, []);
+  return active;
+}
+
+type TeamNavProps = {
+  /** bar: sideways-scrolling chips (phones, tablets); rail: list beside the departments (desktop) */
+  variant: 'bar' | 'rail';
+  className?: string;
 };
 
-type MemberCardProps = { member: TeamMember; accent: Accent; size: CardSize; className?: string };
-
-function MemberCard({ member, accent, size, className }: MemberCardProps) {
-  const { linkedin, instagram, email } = member.socials ?? {};
-  const hasSocials = Boolean(linkedin || instagram || email);
-  const ring = size === 'xl' ? 'ring-gold ring-[3px]' : cn(accentRing[accent], 'ring-[1.5px]');
-  const role = member.title ?? member.role;
-
-  const socialLink = 'inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-navy transition hover:border-gold hover:text-saffron-ink';
-
-  return (
-    <motion.article
-      layout
-      className={cn(
-        'group relative flex flex-col items-center rounded-2xl border border-line bg-white text-center shadow-card transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lift focus-within:-translate-y-1',
-        size === 'sm' ? 'px-3 py-5 sm:px-5 sm:py-6' : 'px-6 py-7 sm:px-8',
-        className,
-      )}
-    >
-      <div className={cn('relative shrink-0 rounded-full ring-offset-4 ring-offset-white', ring, photoSize[size])}>
-        {member.photo ? (
-          <img src={member.photo} alt={`Portrait of ${member.name}`} loading="lazy" className="h-full w-full rounded-full object-cover" />
-        ) : (
-          <span
-            aria-hidden="true"
-            className={cn('flex h-full w-full items-center justify-center rounded-full font-semibold', accentSoftBg[accent], accentText[accent])}
-          >
-            {initialsOf(member.name)}
-          </span>
-        )}
-      </div>
-      <h3 className={cn('font-semibold text-navy', size === 'sm' ? 'mt-4 text-[15px]' : 'mt-5 text-lg')}>{member.name}</h3>
-      <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.2em] text-saffron-ink">{role}</p>
-      {member.department && size !== 'sm' && <p className="mt-1 text-[13px] text-ink-muted">{member.department}</p>}
-
-      {hasSocials && (
-        <ul
-          className={cn(
-            'mt-4 flex justify-center gap-2 transition duration-300',
-            'sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:group-focus-within:translate-y-0 sm:group-focus-within:opacity-100',
-          )}
-        >
-          {linkedin && (
-            <li>
-              <a href={linkedin} target="_blank" rel="noopener noreferrer" aria-label={`${member.name} on LinkedIn`} className={socialLink}>
-                <LinkedinIcon size={17} strokeWidth={1.6} aria-hidden="true" />
-              </a>
-            </li>
-          )}
-          {instagram && (
-            <li>
-              <a href={instagram} target="_blank" rel="noopener noreferrer" aria-label={`${member.name} on Instagram`} className={socialLink}>
-                <InstagramIcon size={17} strokeWidth={1.6} aria-hidden="true" />
-              </a>
-            </li>
-          )}
-          {email && (
-            <li>
-              <a href={`mailto:${email}`} aria-label={`Email ${member.name}`} className={socialLink}>
-                <Mail size={17} strokeWidth={1.6} aria-hidden="true" />
-              </a>
-            </li>
-          )}
-        </ul>
-      )}
-    </motion.article>
-  );
-}
-
-function GroupTitle({ id, label, accent }: { id: string; label: string; accent: Accent }) {
-  return (
-    <div className="flex items-center justify-center gap-3 sm:gap-4">
-      <Diamond className={accentBg[accent]} />
-      <span aria-hidden="true" className={cn('h-px w-8 shrink-0 sm:w-14', accentBg[accent])} />
-      <h2 id={id} className={cn('eyebrow text-center font-semibold [margin-right:-0.35em]', accentText[accent])}>
-        {label}
-      </h2>
-      <span aria-hidden="true" className={cn('h-px w-8 shrink-0 sm:w-14', accentBg[accent])} />
-      <Diamond className={accentBg[accent]} />
-    </div>
-  );
-}
-
-type FilterChipProps = { label: string; active: boolean; onClick: () => void; accent?: Accent };
-
-function FilterChip({ label, active, onClick, accent }: FilterChipProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'inline-flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] px-4 text-[13px] font-medium transition duration-200',
-        active ? 'border-navy bg-navy text-cream' : 'border-line bg-white text-navy hover:border-gold',
-      )}
-    >
-      {accent && <span aria-hidden="true" className={cn('h-2 w-2 rounded-full', accentBg[accent])} />}
-      {label}
-    </button>
-  );
-}
-
-/** Team page body: sticky department filter, leadership tier and department sections. */
-export default function TeamGrid() {
-  const [filter, setFilter] = useState<string>('all');
+/** Links to every department; the one on screen is highlighted. */
+function TeamNav({ variant, className }: TeamNavProps) {
+  const active = useActiveDepartment();
   const reduce = useReducedMotion();
+  const listRef = useRef<HTMLOListElement>(null);
 
-  const { president, secondRow } = useMemo(() => {
-    const leaders = team.filter((m) => m.role === 'President' || m.role === 'Vice President' || m.role === 'Secretary').sort(byOrder);
-    return {
-      president: leaders.filter((m) => m.role === 'President'),
-      secondRow: leaders.filter((m) => m.role !== 'President'),
-    };
-  }, []);
+  // keep the current chip in view in the sideways-scrolling bar
+  useEffect(() => {
+    const list = listRef.current;
+    if (variant !== 'bar' || !list || list.clientWidth === 0) return;
+    const chip = list.querySelector<HTMLElement>(`[data-id="${active}"]`);
+    if (chip) list.scrollTo({ left: chip.offsetLeft - (list.clientWidth - chip.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+  }, [active, variant, reduce]);
 
-  const visible = filter === 'all' ? departments : departments.filter((d) => d.slug === filter);
-
-  const sectionMotion = reduce
-    ? {}
-    : {
-        initial: { opacity: 0, y: 16 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: -12 },
-        transition: { duration: 0.35, ease: 'easeOut' as const },
-      };
+  if (variant === 'bar') {
+    return (
+      <nav aria-label={teamPage.navLabel} className={className}>
+        <ol ref={listRef} className="no-scrollbar container-x relative flex gap-2 overflow-x-auto py-2.5">
+          {departments.map((department, i) => {
+            const current = department.id === active;
+            return (
+              <li key={department.id} className="shrink-0">
+                <Link
+                  to={{ hash: `#${department.id}` }}
+                  data-id={department.id}
+                  aria-current={current ? 'location' : undefined}
+                  className={cn(
+                    'inline-flex min-h-[40px] items-center gap-2 whitespace-nowrap rounded-full border px-3.5 text-[12.5px] font-medium transition-colors duration-200',
+                    current ? 'border-navy bg-navy text-cream' : 'border-line bg-white text-navy hover:border-gold',
+                  )}
+                >
+                  <span className={cn('font-display text-[15px] font-semibold leading-none lining-nums', current ? 'text-gold-soft' : 'text-gold-ink')}>{pad(i + 1)}</span>
+                  {department.name}
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    );
+  }
 
   return (
-    <div>
-      {/* Sticky department filter */}
-      <div className="sticky top-[76px] z-30 border-y border-line bg-cream/90 backdrop-blur-md">
-        <div className="container-x">
-          <div role="group" aria-label={teamPage.filterLabel} className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-3 sm:-mx-8 sm:px-8 lg:mx-0 lg:flex-wrap lg:justify-center lg:px-0">
-            <FilterChip label={teamPage.allLabel} active={filter === 'all'} onClick={() => setFilter('all')} />
-            {departments.map((d) => (
-              <FilterChip key={d.slug} label={d.name} accent={d.accent} active={filter === d.slug} onClick={() => setFilter(d.slug)} />
-            ))}
-          </div>
-        </div>
+    <nav aria-label={teamPage.navLabel} className={className}>
+      <p className="eyebrow text-[11px] text-gold-ink">{teamPage.navLabel}</p>
+      <ol className="mt-3 border-l border-line">
+        {departments.map((department, i) => {
+          const current = department.id === active;
+          return (
+            <li key={department.id}>
+              <Link
+                to={{ hash: `#${department.id}` }}
+                aria-current={current ? 'location' : undefined}
+                className={cn(
+                  '-ml-px flex items-baseline gap-3 border-l-2 py-[7px] pl-4 pr-1 text-[13.5px] leading-snug transition-colors duration-200',
+                  current ? 'border-saffron font-semibold text-navy' : 'border-transparent text-ink-muted hover:border-gold hover:text-navy',
+                )}
+              >
+                <span className="font-display text-[15px] font-semibold text-gold-ink lining-nums">{pad(i + 1)}</span>
+                <span className="min-w-0 flex-1">{department.name}</span>
+                <span className="text-[12px] font-normal text-ink-muted">{department.members.length}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/** Portrait in a gold-framed arched window, name and designation below. */
+function MemberCard({ member, index }: { member: TeamMember; index: number }) {
+  return (
+    <li className="team-card group" style={cssVars({ '--i': index })}>
+      <div
+        className={cn(
+          'relative aspect-[4/5] overflow-hidden bg-navy-deep shadow-card ring-1 ring-gold/40 transition-[transform,box-shadow] duration-500 ease-out group-hover:-translate-y-1.5 group-hover:shadow-lift',
+          ARCH,
+        )}
+      >
+        {member.picture ? (
+          <img
+            src={member.picture}
+            alt=""
+            width={480}
+            height={600}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onLoad={onPortraitLoad}
+            className="team-photo h-full w-full object-cover object-[50%_22%] group-hover:scale-[1.04]"
+          />
+        ) : (
+          <PortraitCrest name={member.name} className="h-full w-full transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+        )}
+        <span
+          aria-hidden="true"
+          className={cn('pointer-events-none absolute inset-[7px] border border-gold-soft/45 transition-colors duration-500 group-hover:border-gold-soft', ARCH_INNER)}
+        />
       </div>
+      <h3 className="mt-3.5 text-balance text-center text-[15px] font-semibold leading-snug text-navy">{member.name}</h3>
+      {member.designation && (
+        <p className={cn('mt-1 text-center text-[11px] font-medium uppercase tracking-[0.2em]', designationTone(member.designation))}>{member.designation}</p>
+      )}
+    </li>
+  );
+}
 
-      <div className="container-x py-16 sm:py-20">
-        <LayoutGroup>
-          <AnimatePresence mode="popLayout" initial={false}>
-            {filter === 'all' && (
-              <motion.section key="leadership" layout aria-labelledby="team-leadership" className="pb-20" {...sectionMotion}>
-                <GroupTitle id="team-leadership" label={teamPage.leadershipLabel} accent="gold" />
-                <div className="mt-10 flex justify-center">
-                  {president.map((m) => (
-                    <MemberCard key={m.id} member={m} accent="gold" size="xl" className="w-full max-w-sm" />
-                  ))}
-                </div>
-                <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:mx-auto lg:max-w-5xl lg:grid-cols-3">
-                  {secondRow.map((m) => (
-                    <MemberCard key={m.id} member={m} accent="saffron" size="lg" />
-                  ))}
-                </div>
-              </motion.section>
-            )}
+/** The cards rise in one after another every time the grid scrolls into view (CSS only, see .team-card). */
+function MemberGrid({ members }: { members: TeamMember[] }) {
+  const ref = useRef<HTMLUListElement>(null);
+  const shown = useScrollReveal(ref);
+  return (
+    <ul
+      ref={ref}
+      role="list"
+      data-shown={shown}
+      className="mt-7 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4"
+    >
+      {members.map((member, i) => (
+        <MemberCard key={member.id} member={member} index={i} />
+      ))}
+    </ul>
+  );
+}
 
-            {visible.map((dept) => {
-              const members = team.filter((m) => m.department === dept.name);
-              const heads = members.filter((m) => m.role === 'Head').sort(byOrder);
-              const crew = members.filter((m) => m.role === 'Member').sort(byOrder);
-              return (
-                <motion.section key={dept.slug} layout aria-labelledby={`team-${dept.slug}`} className="pb-20 last:pb-0" {...sectionMotion}>
-                  <GroupTitle id={`team-${dept.slug}`} label={dept.name} accent={dept.accent} />
-                  {heads.length > 0 && (
-                    <>
-                      <h3 className="sr-only">{teamPage.headsLabel}</h3>
-                      <div className="mt-10 flex flex-wrap justify-center gap-6">
-                        {heads.map((m) => (
-                          <MemberCard key={m.id} member={m} accent={dept.accent} size="md" className="w-full max-w-[19rem]" />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  {crew.length > 0 && (
-                    <>
-                      <h3 className="sr-only">{teamPage.membersLabel}</h3>
-                      <div className="mx-auto mt-6 flex max-w-5xl flex-wrap justify-center gap-4 sm:gap-5">
-                        {crew.map((m) => (
-                          <MemberCard
-                            key={m.id}
-                            member={m}
-                            accent={dept.accent}
-                            size="sm"
-                            className="w-[calc(50%-0.5rem)] sm:w-[12.5rem] lg:w-[13.5rem]"
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </motion.section>
-              );
-            })}
-          </AnimatePresence>
-        </LayoutGroup>
+function DepartmentSection({ department, index }: { department: TeamDepartment; index: number }) {
+  const accent = rotateAccent(index);
+  const titleId = `${department.id}-title`;
+  const count = department.members.length;
+  return (
+    // phones: clear the sticky chip bar as well as the navbar when jumped to
+    <section id={department.id} aria-labelledby={titleId} className="relative scroll-mt-[68px] border-t border-line py-10 first:border-t-0 first:pt-0 sm:py-12 lg:scroll-mt-2">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-0 top-4 select-none font-display text-[clamp(4.5rem,9vw,7rem)] font-semibold leading-none text-gold/[0.16] lining-nums"
+      >
+        {pad(index + 1)}
+      </span>
+      <header className="relative flex items-center gap-4">
+        <span aria-hidden="true" className={cn('inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-[1.5px] bg-cream', accentLine[accent])}>
+          <Motif name={MOTIFS[index % MOTIFS.length]} strokeWidth={1.9} className="h-8 w-8" />
+        </span>
+        <div className="min-w-0">
+          <p className={cn('eyebrow text-[11px]', accentText[accent])}>
+            Team {pad(index + 1)} · {count} {count === 1 ? 'person' : 'people'}
+          </p>
+          <h2 id={titleId} className="mt-0.5 text-[clamp(1.2rem,2.4vw,1.55rem)] font-semibold uppercase leading-tight tracking-[0.1em] text-navy">
+            {department.name}
+          </h2>
+        </div>
+      </header>
+      <MemberGrid members={department.members} />
+    </section>
+  );
+}
+
+/** Team page body: the department index (a sticky chip bar on phones, a rail on desktop) and a section per department. */
+export default function TeamGrid() {
+  return (
+    <div className="relative bg-cream-2">
+      <TeamNav variant="bar" className="sticky top-[var(--nav-h)] z-30 border-y border-line bg-cream-2 lg:hidden" />
+      <div className="container-x pb-16 pt-10 sm:pb-20 lg:grid lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:gap-12 lg:pt-14 xl:grid-cols-[16rem_minmax(0,1fr)] xl:gap-16">
+        <aside className="hidden lg:block">
+          <TeamNav variant="rail" className="sticky top-[calc(var(--nav-h)+28px)] max-h-[calc(100svh-var(--nav-h)-48px)] overflow-y-auto [scrollbar-width:thin]" />
+        </aside>
+        <div>
+          {departments.map((department, i) => (
+            <DepartmentSection key={department.id} department={department} index={i} />
+          ))}
+        </div>
       </div>
     </div>
   );
