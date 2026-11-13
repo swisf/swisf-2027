@@ -74,10 +74,10 @@ export const site = {
 
 export const navLinks = [
   { label: 'Home', to: '/' },
-  { label: 'What You Experience', to: '/experience' },
-  { label: 'Project Sunray', to: '/project-sunray' },
   { label: 'Mascots', to: '/mascots' },
+  { label: 'What You Experience', to: '/experience' },
   { label: 'Sponsors', to: '/sponsors' },
+  { label: 'Project Sunray', to: '/project-sunray' },
   { label: 'Team', to: '/team' },
 ] as const;
 

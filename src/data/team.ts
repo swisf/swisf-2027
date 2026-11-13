@@ -89,9 +89,9 @@ export const teamCounts = {
 };
 
 export const teamPage = {
-  eyebrow: 'SWISF 2027 · E-Cell, NIT Meghalaya',
+  eyebrow: 'SWISF 2027',
   heading: { line1: 'The organising', line2: 'team' },
-  intro: 'The students of E-Cell, NIT Meghalaya who are putting SWISF 2027 together, team by team.',
+  intro: 'Meet the team who are putting SWISF 2027 together, one step at a time.',
   stats: { people: 'People', departments: 'Teams' },
   navLabel: 'Teams',
   join: {

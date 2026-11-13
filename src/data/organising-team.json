@@ -1,6 +1,7 @@
 {
   "Executive Leadership": {
-    "Arush Raman" : { "designation": "President", "picture": "organising-team/arush-raman.webp"}
+    "Arush Raman" : { "designation": "President", "picture": "organising-team/arush-raman.webp"},
+    "Swarnim Suman": { "designation": "Vice President", "picture": "organising-team/swarnim-suman.webp" }
   },
   "Anchors": {
     "Swarnim Suman": { "designation": "Anchor", "picture": "organising-team/swarnim-suman.webp" },
